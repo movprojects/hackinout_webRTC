@@ -2,6 +2,22 @@ var io = io();
 var peerId ;
 var picasso = _('picasso');
 var ctx     = picasso.getContext('2d');
+var width = picasso.width;
+var height = picasso.height;
+var mage ;
+var imagebuffer = [];
+
+var buflen = 30;
+
+for(var i=0;i<buflen;i++) imagebuffer[i] = 0;
+
+function getzeroes(){
+    var zerocount = 0;
+    for(var i=0;i<imagebuffer.length;i++) if(imagebuffer[i]==0) zerocount++;
+    return zerocount;
+}
+
+console.log(getzeroes(imagebuffer));
 
 io.on('welcome',function(data){
     console.log(data.data);
@@ -9,22 +25,50 @@ io.on('welcome',function(data){
     io.emit('welcomeack',{ data: 'hello back from client:'+peerId});
 });
 
+var counter = 0;
+var initialcount = 0;
+
 io.on('irec',function(data){
-    blob = data.data;
-    var bytes = new Uint8Array(blob.size);
-    var image = ctx.createImageData(picasso.width, picasso.height);
-    
-    for (var i=0; i<image.length; i++) {
-        image[i] = bytes[i];
+        mage = new Image();
+        mage.src = data.data;
+        mage.onload = function(){
+           ctx.drawImage(mage,0,0);
+        }
+     /*
+    if(getzeroes()==0){
+        mage = new Image();
+        mage.src = data.data;
+        mage.onload = function(){
+           imagebuffer[9] = mage;
+        }
+        if(initialcount==0){ playvideo(); initialcount++;}
     }
+    else { console.log(getzeroes()); recimage(data.data,counter);}
     
-    ctx.putImageData(image,0,0);
-    console.log(image);
+    if(counter==(buflen-1)) counter = 0;
+    else if(counter<(buflen-1)) counter++;*/
 });
 
-$(document).ready(function(){
-    console.log("app ready 2 use !!");
-});
+function shiftleft(){
+    for(var i=0;i<(buflen-1);i++){
+        imagebuffer[i] = imagebuffer[i+1];
+    }
+}
+
+function playvideo(){
+    setInterval(function(){
+        ctx.drawImage(imagebuffer[0],0,0);
+        shiftleft();    
+    },60);
+}
+
+function recimage(idata,key){
+    mage = new Image();
+    mage.src = idata;
+    mage.onload = function(){
+        imagebuffer[key] = mage;
+    }
+}
 
 function _(el){
     return  document.getElementById(el);

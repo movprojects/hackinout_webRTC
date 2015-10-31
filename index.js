@@ -35,7 +35,6 @@ io.on('connection',function(socket){
     });
     
     socket.on('idata',function(data){
-        console.log("got image data");
         for(var i=0;i<=sockets.length;i++){
             if(sockets[i]) sockets[i].emit('irec',{ data:data.data});
         }

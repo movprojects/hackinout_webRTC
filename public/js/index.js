@@ -2,6 +2,17 @@ var io = io();
 var picasso = _('picasso');
 var ctx     = picasso.getContext('2d');
 var peerId ;
+var width = picasso.width;
+var height = picasso.height;
+
+var audioctx = new  AudioContext();
+var gainNode = audioctx.createGain();
+gainNode.gain.value = 1;
+var filter = audioctx.createBiquadFilter();
+filter.type = 2;
+filter.frequency.value = 5040;
+
+
 navigator.getUserMedia = navigator.getUserMedia||navigator.webkitGetUserMedia||navigator.mozGetUserMedia;
 
 
@@ -18,7 +29,13 @@ $(document).ready(function(){
             {video:true,audio:true},
             function(stream){ 
                 _('myvideo').src = window.URL.createObjectURL(stream);
+                _('myvideo').volume = 0;
                 _('myvideo').play();
+                _('myaudio').src = window.URL.createObjectURL(stream);
+                var audiosrc = audioctx.createMediaElementSource(_('myvideo'));
+                audiosrc.connect(gainNode);
+                gainNode.connect(filter);
+                filter.connect(audioctx.destination);
             },
             function(){ console.log("failed!!");}
         );
@@ -26,21 +43,32 @@ $(document).ready(function(){
     else alert("browser not supporting webRTC");
     
     setInterval(function(){
-        if(_('myvideo').paused===false) updateCanvas();
-    },0);     
+        if(_('myvideo').paused===false){
+            updateCanvas();
+        }
+    },200);     
 });
 
 var counter = 0;
 var idata;
+var mage;
 
 function updateCanvas(){
     ctx.drawImage(_('myvideo'),0,0,picasso.width,picasso.height);
-    if(counter==0){
-      idata = picasso.toDataURL('image/png');
-      console.log(idata);
-      _('myimage').style.background = 'yellow';    
-      _('myimage').src = idata;    
-      counter++;
+    idata = picasso.toDataURL('image/png');
+    recimage(idata);
+    io.emit('idata',{ data:idata });
+    counter++;
+    //console.log("sending "+counter+" frame");
+}
+
+function recimage(idata){
+    mage = new Image();
+    mage.src = idata;
+    mage.onload = function(){
+        _('picasso2').getContext('2d').fillStyle = 'yellow';
+        _('picasso2').getContext('2d').fillRect(0,0,width,height);
+        _('picasso2').getContext('2d').drawImage(mage,0,0);  
     }
 }
 
