@@ -55,7 +55,6 @@ var mage;
 
 function updateCanvas(){
     ctx.drawImage(_('myvideo'),0,0,picasso.width,picasso.height);
-    // enables jpeg compression, fastens transmission of frames
     idata = picasso.toDataURL('image/jpeg',0.7);
     recimage(idata);
     io.emit('idata',{ data:idata });
